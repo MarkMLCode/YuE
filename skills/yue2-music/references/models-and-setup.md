@@ -50,13 +50,13 @@ support. The package installs its own pinned dependencies. Do not substitute an
 unverified package with a similar name from PyPI.
 
 ```bash
-python3.12 -m venv .venv-yue2
-.venv-yue2/bin/python -m pip install \
+uv venv --python 3.12 .venv-yue2
+uv pip install --python .venv-yue2/bin/python \
   git+https://github.com/multimodal-art-projection/YuE.git
 ```
 
 Alternatively, install from a cloned official YuE repository with
-`.venv-yue2/bin/python -m pip install /path/to/YuE`. The runtime pins PyTorch
+`uv pip install --python .venv-yue2/bin/python /path/to/YuE`. The runtime pins PyTorch
 2.10.0, Transformers 4.57.6, and NumPy 2.2.6. Current repository code and this
 skill use Apache 2.0; earlier v0.1.6 wheel and skill ZIP archives retain their
 bundled licenses. Model repositories supply weights independently of the runtime.
@@ -71,14 +71,14 @@ shared libraries; install these with the host's normal package/container tools
 and confirm `ffmpeg` is on `PATH`.
 
 ```bash
-python3.11 -m venv .venv-sheetsage2
-.venv-sheetsage2/bin/python -m pip install huggingface-hub==0.36.0
+uv venv --python 3.11 .venv-sheetsage2
+uv pip install --python .venv-sheetsage2/bin/python huggingface-hub==0.36.0
 .venv-sheetsage2/bin/huggingface-cli download m-a-p/SheetSage2 \
   --local-dir models/SheetSage2
-.venv-sheetsage2/bin/python -m pip install \
+uv pip install --python .venv-sheetsage2/bin/python \
   torch==2.8.0 torchaudio==2.8.0 \
   --index-url https://download.pytorch.org/whl/cu126
-.venv-sheetsage2/bin/python -m pip install \
+uv pip install --python .venv-sheetsage2/bin/python \
   -r models/SheetSage2/requirements.txt
 ```
 
@@ -320,8 +320,8 @@ It is not needed to connect SheetSage2 to YuE2, and an embedding distance alone
 does not establish melodic or harmonic fidelity.
 
 ```bash
-python3.11 -m venv .venv-mert2
-.venv-mert2/bin/python -m pip install \
+uv venv --python 3.11 .venv-mert2
+uv pip install --python .venv-mert2/bin/python \
   torch==2.6.0 torchaudio==2.6.0 transformers==4.53.2 \
   huggingface-hub safetensors soundfile
 ```

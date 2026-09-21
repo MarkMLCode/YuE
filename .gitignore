@@ -21,3 +21,5 @@ runs/
 *.whl
 *.partial
 .DS_Store
+/music/
+/music_previous/

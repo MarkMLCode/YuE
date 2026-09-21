@@ -2,7 +2,7 @@
 """Build the Python distribution and portable YuE2 skill with matching checksums.
 
 Run after installing build requirements:
-python -m pip install 'setuptools>=77' build wheel.
+uv pip install 'setuptools>=77' build wheel.
 """
 from __future__ import annotations
 

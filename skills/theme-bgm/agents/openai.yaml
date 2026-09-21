@@ -1,0 +1,4 @@
+interface:
+  display_name: "Theme BGM"
+  short_description: "Generate, screen and export instrumental theme WAVs"
+  default_prompt: "Use $theme-bgm for a theme in music_previous: use both available GPUs with one worker per GPU, run three prompt groups in batches of four, retry up to eight per prompt, export all tracks lasting at least 90 seconds with no detected vocals to music/<theme> as WAV, also save every generated track as WAV in the run's all/ folder, and report saved durations and intended styles. I will choose favorites afterward."

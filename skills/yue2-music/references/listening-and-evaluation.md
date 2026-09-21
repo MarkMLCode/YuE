@@ -1,5 +1,13 @@
 # Listening delivery and reproducible evaluation
 
+For instrumental theme BGM in this repository, use the `theme-bgm` skill's
+AudioSet-only audio audit; do not add Whisper/ASR to that workflow. Its classifier
+screens speech, singing and wordless vocals in overlapping windows. Retain score
+validation; export every duration/vocal pass as WAV before the user's listening
+review. Do not require subjective scores or best-track selection for theme BGM.
+ASR/PER sections in this document
+apply to lyric-bearing tasks and requested benchmark reproduction.
+
 Finish with audio the user can play and the exact conditions that produced it. A score, a metric or a successful process exit is not an audible result.
 
 ## Keep listening and scoring versions separate

@@ -90,15 +90,18 @@ The staged Python API exposes `plan()` → `generate_semantic()` → `synthesize
 
 **Linux · Python 3.12 · NVIDIA GPU with BF16 support and 24 GB VRAM.** YuE2 produces 48 kHz stereo audio without quantization. Model files download from Hugging Face on first use.
 
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first, then run:
+
 ```bash
 git clone https://github.com/multimodal-art-projection/YuE.git
 cd YuE
-python3.12 -m venv .venv
+uv venv --python 3.12 .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install .
+uv pip install .
 python examples/generate.py --output outputs/first-song
 ```
+
+uv downloads Python 3.12 if needed. Keep the virtual environment activated for the commands below. For development and tests, install with `uv pip install -e ".[test]"`, then run `python -m pytest -q`. The optional fast backend can be installed with `uv pip install ".[fast]"`.
 
 Open `outputs/first-song/audio.flac`. The output directory also retains the score, semantic tokens, acoustic latents, generation settings, and model identities.
 
@@ -174,7 +177,7 @@ The editable score is the white-box interface: you can inspect the intended comp
 
 The **[yue2-music skill](skills/yue2-music/SKILL.md)** teaches an agent how to generate songs, transcribe and cover recordings, edit ABC scores, check musical invariants, and organize listening comparisons. It includes portable helpers and references to the released model interfaces.
 
-Use **`skills/yue2-music/` from this repository** with an agent that supports `SKILL.md` packages. Install it using your agent's skill-directory or import mechanism; the Python runtime is installed separately with `pip install .`. The earlier [v0.1.6 skill ZIP](https://github.com/multimodal-art-projection/YuE/releases/download/yue2-v0.1.6/yue2-music.zip) remains available under its bundled license.
+Use **`skills/yue2-music/` from this repository** with an agent that supports `SKILL.md` packages. Install it using your agent's skill-directory or import mechanism; the Python runtime is installed separately with `uv pip install .`. The earlier [v0.1.6 skill ZIP](https://github.com/multimodal-art-projection/YuE/releases/download/yue2-v0.1.6/yue2-music.zip) remains available under its bundled license.
 
 Try a concrete request:
 

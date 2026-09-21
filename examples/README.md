@@ -2,7 +2,7 @@
 
 `song.json` contains the original **City Lights** lyrics and style request used by the agent skill. `melody.abc` is a short, original eight-bar melody for those words. Each lyric line has seven syllables and each bar has seven note onsets. `score.abc` adds harmony; `score-jazz.abc` changes only the chord symbols. These are runnable inputs, not recorded benchmark or quality results.
 
-From the repository root, after `pip install .`:
+From the repository root, after the [uv setup](../README.md#quick-start), with `.venv` activated:
 
 ```bash
 # Create a song and its score from lyrics and style.

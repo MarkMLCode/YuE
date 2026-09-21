@@ -9,14 +9,14 @@ SheetSage2 and YuE2 use different dependency versions. Keep separate environment
 SheetSage2 uses Python 3.10 or 3.11 and requires FFmpeg 6.1 and its shared libraries. Follow the platform setup in its [model card](https://huggingface.co/m-a-p/SheetSage2), then run from the YuE repository root:
 
 ```bash
-python3.11 -m venv .venv-sheetsage2
-.venv-sheetsage2/bin/python -m pip install huggingface-hub==0.36.0
+uv venv --python 3.11 .venv-sheetsage2
+uv pip install --python .venv-sheetsage2/bin/python huggingface-hub==0.36.0
 .venv-sheetsage2/bin/huggingface-cli download m-a-p/SheetSage2 \
   --local-dir models/SheetSage2
-.venv-sheetsage2/bin/python -m pip install \
+uv pip install --python .venv-sheetsage2/bin/python \
   torch==2.8.0 torchaudio==2.8.0 \
   --index-url https://download.pytorch.org/whl/cu126
-.venv-sheetsage2/bin/python -m pip install -r models/SheetSage2/requirements.txt
+uv pip install --python .venv-sheetsage2/bin/python -r models/SheetSage2/requirements.txt
 ```
 
 Loading SheetSage2 automatically loads the MERT-v2-FullSong encoder selected by its configuration. A separate MERT2 feature-extraction step is unnecessary.

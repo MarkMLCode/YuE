@@ -137,6 +137,16 @@ for hard acoustic alignment. Use ASR/PER and listening as separate evidence.
 
 ## Deliver an audible result
 
+For this repository's instrumental theme-BGM workflow, follow
+[theme-bgm](../theme-bgm/SKILL.md): its audio audit uses AudioSet AST for vocal,
+choir and humming detection, with no Whisper/ASR step. Keep the ABC checks;
+silent vocal notation does not guarantee vocal-free audio. That workflow runs
+three prompt groups in quartets, requires at least 90 seconds, and exports all
+passing WAVs before the user's own review. Do not add ranking or quality-score
+gates to it. Its runner can generate independent tracks concurrently in isolated
+processes, with one request at a time per GPU. The ASR/PER guidance
+below concerns sung lyrics and benchmark evaluation, not instrumental BGM screening.
+
 Read [listening-and-evaluation.md](references/listening-and-evaluation.md). Return playable
 audio, full prompt/lyrics, before/after ABC, invariant checks and requested evaluations.
 Keep model/decoder identity and failures visible.
