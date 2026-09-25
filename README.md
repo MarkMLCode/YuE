@@ -19,6 +19,7 @@
   <a href="https://map-yue2.github.io/">🎧 Demos</a> ·
   <a href="https://yue.noizai.net/">🚀 Try online (free)</a> ·
   <a href="https://arena.3-148-255-99.sslip.io:8080">🗳️ Music Arena</a> ·
+  <a href="#news">📰 News</a> ·
   <a href="https://huggingface.co/m-a-p/YuE2-3B">🤗 YuE2</a> ·
   <a href="#quick-start">🚀 Quick start</a> ·
   <a href="#agent-skill">🤖 Agent skill</a> ·
@@ -51,16 +52,6 @@
 
 **YuE2 brings frontier song quality to music generation with an editable composition.** Give it lyrics and a style prompt: it writes a melody-and-chord plan, then realizes that plan as a complete song with vocals and accompaniment.
 
-**[Try YuE2 online for free →](https://yue.noizai.net/)** · Hosted by NOIZ. No installation required.
-
-<a id="music-arena"></a>
-
-> **🎧 YuE2 needs your ears**
->
-> We're running a public listening study comparing YuE2 with leading proprietary music generation systems. Listen to anonymous music clips and choose A, B, or a tie. Your honest feedback helps us understand how YuE2 sounds to real listeners.
->
-> **[Listen & vote →](https://arena.3-148-255-99.sslip.io:8080)** · No account needed. Headphones recommended.
-
 - **Frontier quality.** YuE2 is competitive with Suno v5/v6 on WildSongBench. YuE2 (best-of-8) achieves **6.9632 SongBench Avg**, the highest observed mean among all evaluated settings.
 - **White-box music generation through symbolic planning.** Read, play, and change the composition before rendering it. Melody and chords become explicit controls that a person or an agent can inspect and edit.
 - **Zero-shot covers and agentic editing.** Reimagine a transcribed song in a new style, or refine a song through a conversation about its score, arrangement, and lyrics—all with the same generation checkpoint.
@@ -68,6 +59,17 @@
 [![YuE2 song quality and text alignment on WildSongBench](assets/frontier-teaser.png)](https://map-yue2.github.io/#model-overview)
 
 *192 WildSongBench prompts. Both YuE2 settings use symbolic planning. Bo8 = best-of-8. The axes are normalized comparison indices; bubble area represents AudioBox production quality. [Scores and evaluation protocol](docs/benchmarks.md). [Vector PDF](assets/frontier-teaser.pdf) · [SVG](assets/frontier-teaser.svg).*
+
+## News
+
+<a id="music-arena"></a>
+
+- **🎹 September 25, 2026 — Instrumental generation and covers.** The [yue2-music agent skill](#agent-skill) now turns a simple description, ABC score, or reference recording into instrumental music. YuE2 writes the score by default; the skill moves the vocal melody into the instrumental part before rendering. **Recommended agent: GPT-6 Astra.** [Download the updated skill →](https://github.com/multimodal-art-projection/YuE/releases/download/yue2-music-v1.2.0/yue2-music.zip)
+- **🎧 YuE2 needs your ears.** We're running a public blind listening study comparing YuE2 with leading proprietary music generation systems. Hear anonymous clips and choose A, B, or a tie. **[Listen & vote →](https://arena.3-148-255-99.sslip.io:8080)** · No account needed; headphones recommended.
+- **🚀 Try YuE2 online for free.** Create a song in your browser with the [NOIZ-hosted demo →](https://yue.noizai.net/). No installation required.
+- **⚡ YuE2-Turbo.** [NOIZ's inference and serving toolkit →](https://github.com/NoizAI/YuE2-Turbo) accelerates YuE2 and supports concurrent requests.
+- **🎛️ ComfyUI.** YuE2 has native nodes and an [official text-to-music workflow →](https://github.com/Comfy-Org/workflow_templates/blob/main/templates/audio_yue2_text2music.json).
+- **🎬 Maestro.** [Maestro →](https://github.com/Blizaine/Maestro) includes YuE2 for local song generation, composition planning, and covers. [Creator's post →](https://x.com/blizaine/status/2101852048538968458)
 
 ## Hear what you can make
 
@@ -175,9 +177,19 @@ The editable score is the white-box interface: you can inspect the intended comp
 
 ## Agent skill
 
-The **[yue2-music skill](skills/yue2-music/SKILL.md)** teaches an agent how to generate songs, transcribe and cover recordings, edit ABC scores, check musical invariants, and organize listening comparisons. It includes portable helpers and references to the released model interfaces.
+The **[yue2-music skill](skills/yue2-music/SKILL.md)** teaches an agent how to generate songs and instrumental music, transcribe and cover recordings, edit ABC scores, check musical invariants, and organize listening comparisons. **We recommend GPT-6 Astra as the agent.** YuE2 remains the model that composes the default score and generates the audio.
 
-Use **`skills/yue2-music/` from this repository** with an agent that supports `SKILL.md` packages. Install it using your agent's skill-directory or import mechanism; the Python runtime is installed separately with `uv pip install .`. The earlier [v0.1.6 skill ZIP](https://github.com/multimodal-art-projection/YuE/releases/download/yue2-v0.1.6/yue2-music.zip) remains available under its bundled license.
+Use **`skills/yue2-music/` from this repository** or download the **[updated skill ZIP](https://github.com/multimodal-art-projection/YuE/releases/download/yue2-music-v1.2.0/yue2-music.zip)**. Install it using your agent's skill-directory or import mechanism. The song workflow uses the Python runtime installed with `uv pip install .`; the [instrumental workflow](skills/yue2-music/instrumental/SKILL.md) includes its own pinned setup recipe for the agent to follow. The earlier v0.1.6 release remains unchanged.
+
+For instrumental music, give the agent a simple request:
+
+> Use the yue2-music skill to create gentle piano instrumental music for reading, with no vocals. Give me the playable audio and the full prompt.
+
+For an instrumental cover, attach a reference recording or ABC score:
+
+> Turn this melody into an acoustic-guitar instrumental cover. Keep the melody and give me the audio and full prompt.
+
+The default flow is **YuE2 score → move Vocal notes to Ins → render**. Audio covers first use SheetSage2 to transcribe the reference. The agent composes a new score only when explicitly asked. The helpers preserve vocal-note pitches, onsets, and durations in the converted score and record overlapping parts; listening is still needed to check for vocal leakage and audible melody fidelity.
 
 Try a concrete request:
 
@@ -306,7 +318,7 @@ The YuE2 technical report is coming soon. For now, please cite **[MERT](https://
         <a href="assets/wechat-yue2-group.png">
           <img src="assets/wechat-yue2-group.png" alt="YuE2 WeChat group QR code" width="240" />
         </a><br>
-        <sub>Click to enlarge<br>Valid until Sep 23, 2026</sub>
+        <sub>Click to enlarge<br>Valid until Sep 29, 2026</sub>
       </details>
     </td>
   </tr>

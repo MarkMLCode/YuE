@@ -32,3 +32,7 @@ jobs:
           .venv/bin/yue2 doctor
       - name: Run tests without model downloads
         run: .venv/bin/python -m pytest -q
+      - name: Check instrumental workflow and portable bundle
+        run: |
+          .venv/bin/python -B skills/yue2-music/instrumental/scripts/test_tools.py
+          .venv/bin/python -B tools/build_release.py --skill-only --output /tmp/yue2-skill-dist
