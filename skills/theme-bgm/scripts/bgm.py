@@ -19,8 +19,29 @@ from common import component, contained, digest, identifier, read, write
 GROUPS = 3
 BATCH_SIZE = 4
 GROUP_LIMIT = 8
-MIN_SECONDS = 90
+MIN_SECONDS = 75
 SCHEMA = 3
+
+
+def minimum_seconds(value):
+    if type(value) not in (int, float) or not 0 < value < float("inf"):
+        raise ValueError("Minimum duration must be a positive finite number")
+    return value
+
+
+def candidate_minimum(dest):
+    return minimum_seconds(read(dest.parent.parent / "batch.json")["min_seconds"])
+
+
+def instrumental_lyrics(value):
+    """Allow an empty lyric field or empty structure tags, never sung words."""
+    if not isinstance(value, str) or any(
+        not re.fullmatch(r"\[(?:Intro|Verse|Pre-Chorus|Chorus|Bridge|Interlude|Instrumental|Outro)\]",
+                         line.strip(), re.IGNORECASE)
+        for line in value.splitlines() if line.strip()
+    ):
+        raise ValueError("Instrumental lyrics must be empty or contain only empty section tags")
+    return value
 
 
 def score_check(repo, abc):
@@ -46,8 +67,9 @@ def batch(path):
     repo = Path(manifest["repo"]).resolve()
     contained(repo, path)
     contained(repo / "music_previous", repo / "music_previous" / component(manifest["theme"]))
-    if len(manifest["groups"]) != GROUPS or manifest["min_seconds"] != MIN_SECONDS:
-        raise ValueError("Expected three prompt groups with a 90-second minimum")
+    if len(manifest["groups"]) != GROUPS:
+        raise ValueError("Expected three prompt groups")
+    minimum_seconds(manifest["min_seconds"])
     return path, manifest, repo
 
 
@@ -57,6 +79,7 @@ def candidate(run, name):
 
 def prepare(a):
     import soundfile as sf
+    minimum = minimum_seconds(getattr(a, "min_seconds", MIN_SECONDS))
     repo = a.repo.resolve()
     theme = component(a.theme)
     source = contained(repo / "music_previous", repo / "music_previous" / theme)
@@ -79,6 +102,8 @@ def prepare(a):
                  "style": prompt["style"], "seed": seed,
                  "summary": prompt["summary"], "difference": prompt["difference"],
                  "demo_case_ids": prompt.get("demo_case_ids", [])}
+        if "lyrics" in prompt:
+            group["lyrics"] = instrumental_lyrics(prompt["lyrics"])
         if "retry_style" in prompt:
             if not isinstance(prompt["retry_style"], str) or not prompt["retry_style"].strip():
                 raise ValueError("retry_style must be nonempty when supplied")
@@ -110,7 +135,7 @@ def prepare(a):
     output.mkdir(parents=True, exist_ok=False)
     write(output / "batch.json", {"schema": SCHEMA, "repo": str(repo), "theme": theme,
           "groups": groups, "batch_size": BATCH_SIZE, "group_limit": GROUP_LIMIT,
-          "min_seconds": MIN_SECONDS, "references": tracks,
+          "min_seconds": minimum, "references": tracks,
           "created_at": datetime.now(timezone.utc).isoformat(),
           "demo_site": "https://map-yue2.github.io/"})
     print(output)
@@ -120,7 +145,8 @@ def request_for(group, attempt):
     retry = attempt > BATCH_SIZE
     request = {"id": f"{group['id']}-{attempt:02d}",
                "style": group.get("retry_style", group["style"]) if retry else group["style"],
-               "lyrics": "", "cot": "full", "seed": group["seed"] + attempt - 1}
+               "lyrics": instrumental_lyrics(group.get("lyrics", "")),
+               "cot": "full", "seed": group["seed"] + attempt - 1}
     abc = group.get("retry_abc", group.get("abc")) if retry else group.get("abc")
     if abc:
         request["abc"] = abc
@@ -186,8 +212,9 @@ def decision(dest):
     seconds = sf.info(audio).duration
     if any(result["truncated"].values()):
         return {"accepted": False, "seconds": seconds, "issues": ["truncated"]}
-    if seconds < MIN_SECONDS:
-        return {"accepted": False, "seconds": seconds, "issues": ["shorter_than_90_seconds"]}
+    minimum = candidate_minimum(dest)
+    if seconds < minimum:
+        return {"accepted": False, "seconds": seconds, "issues": [f"shorter_than_{minimum:g}_seconds"]}
     report = read(dest / "audit.json")
     if report.get("status") not in ("screen_clear", "needs_review") or report.get("audio_sha256") != digest(audio):
         raise ValueError("Missing, failed or stale audio audit")
@@ -212,12 +239,13 @@ def decision(dest):
 def screen(dest, a):
     import soundfile as sf
     native_result(dest)
+    minimum = candidate_minimum(dest)
     # Reject short tracks before spending CPU time on vocal classification.
-    if sf.info(dest / "native/audio.flac").duration < MIN_SECONDS:
+    if sf.info(dest / "native/audio.flac").duration < minimum:
         return decision(dest)
     if not (dest / "audit.json").exists():
         options = [str(Path(__file__).with_name("audit.py")), str(dest / "native/audio.flac"),
-                   "--output", str(dest / "audit.json"), "--min-seconds", str(MIN_SECONDS),
+                   "--output", str(dest / "audit.json"), "--min-seconds", str(minimum),
                    "--ast-model", a.ast_model]
         if a.ast_revision:
             options += ["--ast-revision", a.ast_revision]
@@ -230,7 +258,7 @@ def screen(dest, a):
         else:
             import audit
             audit.run(SimpleNamespace(audio=dest / "native/audio.flac", output=dest / "audit.json",
-                      min_seconds=MIN_SECONDS, max_seconds=None, ast_model=a.ast_model,
+                      min_seconds=minimum, max_seconds=None, ast_model=a.ast_model,
                       ast_revision=a.ast_revision, cache_dir=a.cache_dir, offline=a.offline))
     return decision(dest)
 
@@ -495,6 +523,7 @@ def export(a):
                             "request": read(c / "native/request.json"), "decision": read(c / "decision.json"),
                             "weights": read(c / "native/result.json")["weights"]})
         selection = {"theme": b["theme"], "run": str(run_path), "groups": groups,
+                     "min_seconds": b["min_seconds"],
                      "selected": entries, "note": "AudioSet screening only; no personal listening or guarantee of vocal absence."}
         write(stage / receipt_name, selection)
         written = []
@@ -539,7 +568,7 @@ def final_report(run_path, selection):
 
 def status(a):
     path, b, _ = batch(a.run)
-    print(json.dumps({"theme": b["theme"], "minimum_seconds": MIN_SECONDS,
+    print(json.dumps({"theme": b["theme"], "minimum_seconds": b["min_seconds"],
                       "groups": [group_status(path, g) for g in b["groups"]]}, indent=2))
 
 
@@ -551,6 +580,8 @@ def main():
     q.add_argument("--theme", required=True)
     q.add_argument("--prompts", type=Path, required=True)
     q.add_argument("--output", type=Path, required=True)
+    q.add_argument("--min-seconds", type=float, default=MIN_SECONDS,
+                   help="Minimum accepted duration saved with this batch (default: 75)")
     for name in ("run", "export", "archive", "status"):
         q = sub.add_parser(name)
         q.add_argument("--run", type=Path, required=True)

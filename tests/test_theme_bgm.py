@@ -91,7 +91,7 @@ class BgmWorkflowTests(unittest.TestCase):
         dest = bgm.candidate(self.run, request["id"])
         common.write(dest / "request.json", request)
         self.native(dest, seconds, truncated)
-        if seconds >= 90:
+        if seconds >= common.read(self.run / "batch.json")["min_seconds"]:
             self.report(dest, issues, choir)
         verdict = bgm.decision(dest)
         common.write(dest / "decision.json", verdict)
@@ -277,6 +277,27 @@ class BgmWorkflowTests(unittest.TestCase):
         self.assertTrue(bgm.decision(self.candidate(attempt=2, seconds=90))["accepted"])
         self.assertTrue(bgm.decision(self.candidate(attempt=3, seconds=241))["accepted"])
 
+    def test_batch_specific_duration_preserves_legacy_and_accepts_75_seconds(self):
+        manifest = common.read(self.run / "batch.json")
+        self.assertEqual(bgm.batch(self.run)[1]["min_seconds"], 90)
+        self.assertFalse(bgm.decision(self.candidate(seconds=80))["accepted"])
+        manifest["min_seconds"] = 75
+        common.write(self.run / "batch.json", manifest)
+        self.assertEqual(bgm.batch(self.run)[1]["min_seconds"], 75)
+        self.assertTrue(bgm.decision(self.candidate(attempt=2, seconds=75))["accepted"])
+        short = self.candidate(attempt=3, seconds=74.999)
+        with patch.object(audit, "run") as classifier:
+            self.assertEqual(bgm.screen(short, self.args)["issues"], ["shorter_than_75_seconds"])
+            classifier.assert_not_called()
+        dest = bgm.candidate(self.run, "g1-04")
+        common.write(dest / "request.json", bgm.request_for(self.groups[0], 4))
+        self.native(dest, seconds=80)
+        def classify(args):
+            self.assertEqual(args.min_seconds, 75)
+            self.report(dest)
+        with patch.object(audit, "run", side_effect=classify):
+            self.assertTrue(bgm.screen(dest, self.args)["accepted"])
+
     def test_choir_rejected_even_if_status_or_issues_omit_flag(self):
         c = self.candidate(choir=.02)
         self.assertFalse(bgm.decision(c)["accepted"])
@@ -337,10 +358,25 @@ class BgmWorkflowTests(unittest.TestCase):
         bgm.prepare(args)
         data = common.read(args.output / "batch.json")
         self.assertEqual(data["groups"][0]["difference"], self.groups[0]["difference"])
-        self.assertEqual(data["min_seconds"], 90)
+        self.assertEqual(data["min_seconds"], 75)
         common.write(prompts, self.groups[:2])
         with self.assertRaisesRegex(ValueError, "exactly three"):
             bgm.prepare(args)
+
+    def test_empty_structure_tags_survive_prepare_and_retry(self):
+        lyrics = "[Verse]\n\n[Pre-Chorus]\n\n[Chorus]\n\n[Outro]"
+        groups = [{**g, "lyrics": lyrics} for g in self.groups]
+        prompts = self.repo / "tagged-prompts.json"
+        common.write(prompts, groups)
+        args = SimpleNamespace(repo=self.repo, theme="adventure begins", prompts=prompts,
+                               output=self.repo / "outputs/tagged")
+        bgm.prepare(args)
+        group = common.read(args.output / "batch.json")["groups"][0]
+        for attempt in (1, 5):
+            self.assertEqual(bgm.request_for(group, attempt)["lyrics"], lyrics)
+        for bad in ("[Verse]\nSing these words", "[A singer sings]", None):
+            with self.assertRaisesRegex(ValueError, "empty section tags"):
+                bgm.request_for({**group, "lyrics": bad}, 1)
 
     def test_run_reuses_pipeline_exports_and_resumes_without_regeneration(self):
         pipe = MagicMock()

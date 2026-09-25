@@ -1,6 +1,6 @@
 ---
 name: theme-bgm
-description: Generate instrumental BGM for a theme in music_previous using three YuE2 prompt groups, screen duration and vocals, and export every passing track as WAV to the matching music folder.
+description: Generate instrumental BGM from music_previous theme references using three detailed prompts and original authored scores around two minutes; screen duration and vocals and export every passing WAV.
 ---
 
 # Theme BGM
@@ -20,19 +20,32 @@ does not change which tracks qualify for `music/<theme>/`.
 1. Read the checkout's `skills/yue2-music/SKILL.md` for model setup and generation.
    Use its public staged API and ABC helpers. This workflow uses **AudioSet AST,
    no Whisper/ASR**, for vocal screening.
-2. Inspect the theme's reference audio and supplied prompts. Follow
-   [prompting.md](references/prompting.md) to adapt relevant YuE2 demo styles into
+2. Analyze every reference recording's tempo and broad style evidence using
+   [reference-analysis.md](references/reference-analysis.md). Save estimates,
+   ambiguities and the chosen tempo/style adaptation for each reference. Follow
+   [prompting.md](references/prompting.md) to search the bundled demo catalog offline
+   and adapt relevant YuE2 demo styles into
    **three distinct prompts**. Save each prompt's short intended-style `summary`
    and `difference` from the other two for the final report.
-3. Use [workflow.md](references/workflow.md) to prepare and run the batch. Reuse
+3. Author an original finite ABC score for each prompt, informed by the reference
+   analysis. Choose tempo and rhythmic feel from the references, with creative
+   latitude over harmony, melody, instrumentation and development. Target roughly
+   120 seconds using score tempo and bar count; validate duration and silent vocal
+   notation. Supply each score via `abc_file` with `cot="full"` and empty lyrics.
+   This is the default: YuE2 renders the supplied score. Let YuE2 compose its own
+   score only when the user requests that workflow. See
+   [prompting.md](references/prompting.md#scores-and-retry-prompts).
+4. Use [workflow.md](references/workflow.md) to prepare and run the batch. Reuse
    the scripts; do not write custom orchestration or per-track reviews.
 
 ## Fixed batch rules
 
 - Generate **four candidates** for prompt 1 and finish the entire quartet.
-- Accept valid, untruncated music lasting **at least 90 seconds** with **no
+- Accept valid, untruncated music lasting **at least 75 seconds** with **no
   AudioSet vocal flags**. Reject shorter tracks; do not pad or stretch them.
-  Keep ABC checks: empty lyrics, rests in `Vocal`, melody in `Ins`.
+  Compose for about two minutes; 75 seconds is the acceptance floor, not the target.
+  Keep ABC checks: no sung words (empty lyrics or empty section tags), rests in
+  `Vocal`, melody in `Ins`.
 - If at least one passes, advance to the next prompt. If none pass, generate one
   more quartet with fresh seeds, using the supplied retry prompt/score if present.
 - After **eight attempts maximum per prompt**, advance even if none pass.

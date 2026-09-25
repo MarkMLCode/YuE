@@ -1,0 +1,4 @@
+interface:
+  display_name: "Song Analysis"
+  short_description: "Analyze songs locally with Music Flamingo"
+  default_prompt: "Use $song-analysis to analyze this recording's instruments, mood, rhythm, arrangement, and production."

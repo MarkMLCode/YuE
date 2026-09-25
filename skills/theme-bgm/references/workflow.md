@@ -5,12 +5,20 @@ lowercase run-folder name each time. Leave `music_previous` intact.
 
 ## 1. Write prompts
 
+First follow [reference-analysis.md](reference-analysis.md) to analyze every source
+recording. Save the analysis and a reference-to-prompt mapping with the run.
+Then author one original two-minute ABC score for each direction as described in
+[prompting.md](prompting.md#scores-and-retry-prompts). Validate each score's structure,
+nominal duration, vocal rests and instrumental melody before generation. Save the
+scores beside the prompts JSON and reference them with `abc_file` as shown below.
+
 Save a JSON array of exactly three objects to `outputs/theme-prompts.json`:
 
 ```json
 [
   {
     "title": "Departure march",
+    "abc_file": "departure-march.abc",
     "summary": "Determined orchestral hip-hop led by low strings.",
     "difference": "The most rhythmic and forceful of the three directions.",
     "style": "Purely instrumental adventure BGM: low strings, brass answers, bass and a steady hip-hop beat at 96 BPM. Aim for two minutes with an intro, developed motif, contrast, reprise and instrument-led cadence. No singing, speech, choir, humming or vocal samples.",
@@ -18,6 +26,7 @@ Save a JSON array of exactly three objects to `outputs/theme-prompts.json`:
   },
   {
     "title": "Open horizons",
+    "abc_file": "open-horizons.abc",
     "summary": "Expansive orchestral-pop exploration with soaring strings and piano.",
     "difference": "Broader and more flowing than the march or the small travel ensemble.",
     "style": "Purely instrumental exploration BGM: lyrical strings and piano over orchestral-pop drums at 108 BPM. Aim for two minutes of evolving themes, a quieter contrast and a broad instrumental reprise. Piano and strings carry the complete ending. No singing, speech, choir, humming or vocal samples.",
@@ -25,6 +34,7 @@ Save a JSON array of exactly three objects to `outputs/theme-prompts.json`:
   },
   {
     "title": "Traveling companions",
+    "abc_file": "traveling-companions.abc",
     "summary": "Light chamber-folk travel music with flute, mandolin and pizzicato strings.",
     "difference": "The smallest ensemble and gentlest pulse, with playful articulated melodies.",
     "style": "Purely instrumental traveling-party BGM: flute and mandolin trade themes over pizzicato strings and gentle frame drum at 96 BPM. Aim for two minutes with introduction, developed theme, contrast, varied reprise and a plucked instrumental cadence. No singing, speech, choir, humming or vocal samples.",
@@ -34,8 +44,11 @@ Save a JSON array of exactly three objects to `outputs/theme-prompts.json`:
 ```
 
 Adapt this example to the theme using [prompting.md](prompting.md). Required fields:
-`style`, `summary`, `difference`. Optional: `title`, `seed`, `demo_case_ids`,
-`abc_file`, `retry_style`, `retry_abc_file`. ABC paths are relative to the prompts
+`style`, `summary`, `difference`. Include `abc_file` for the default authored-score
+workflow; omitting it asks YuE2 to compose its own plan, which is reserved for an
+explicit user request. Optional: `title`, `seed`, `demo_case_ids`,
+`retry_style`, `retry_abc_file`, `lyrics` (empty section tags only).
+Omitting `lyrics` keeps the field empty. ABC paths are relative to the prompts
 JSON. Scores are validated and copied into the batch; original files stay intact.
 Write retry prompts in advance if useful, staying within each group's description.
 
@@ -55,6 +68,10 @@ four only when the first quartet has zero passes, then advances. After three gro
 it converts every passing native FLAC to **24-bit PCM WAV**, preserving samples,
 sample rate and duration, and saves them in `music/<exact theme>/`. There is no
 ranking, minimum total pass count, or manual acceptance step.
+The minimum duration is saved in `batch.json` during preparation. New batches
+default to 75 seconds; use `prepare --min-seconds N` for a user-requested minimum.
+Generation, screening, status and export use that batch's value. Older batches
+retain their saved threshold, including 90-second runs.
 It also saves every generated track as WAV to `<run>/all/`, including rejected
 tracks. Attempts that failed before producing audio have no WAV to archive.
 
